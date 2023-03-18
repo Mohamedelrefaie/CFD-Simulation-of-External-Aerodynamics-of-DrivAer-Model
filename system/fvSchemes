@@ -1,0 +1,66 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  7                                     |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    ddtSchemes
+    {
+        default steadyState; //Steady state discretization
+    }
+
+    gradSchemes
+    {
+        default cellLimited Gauss linear 0.333;
+        //aggressive limiters are only used for the velocity and 
+        //turbulent quantities
+        grad(U) cellLimited Gauss linear 1;
+        grad(k) cellLimited Gauss linear 1;
+        grad(omega) cellLimited Gauss linear 1;
+    }
+
+    divSchemes 
+    {
+        default Gauss linear;
+        //Discretization of the velocity convective term
+        //Second order discretization
+        div(phi,U) 	bounded Gauss linearUpwindV grad(U);
+        
+        div(phi,k) 	bounded Gauss upwind; //First order discretization
+        div(phi,omega) 	bounded Gauss upwind; //First order discretization
+        
+        //Discretization of the Reynolds stresses
+        div((nuEff*dev(grad(U).T()))) Gauss linear;
+
+    }
+
+    interpolationSchemes
+    {
+        default linear; 
+    }
+    
+    //Discretization of the diffusive terms
+    laplacianSchemes
+    {
+        default Gauss linear limited 0.5;
+    }
+
+    snGradSchemes
+    {
+        default limited 0.5;
+    }
+
+    wallDist
+    {
+        method meshWave;
+    }

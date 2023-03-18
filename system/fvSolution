@@ -1,0 +1,125 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  7                                     |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    solvers
+    {
+        p
+        {
+        solver           GAMG; // pressure (p) linear solver
+        tolerance        1e-6; // recommended tolerance value
+        relTol           0.01;
+        smoother         GaussSeidel;
+        nPreSweeps       0;
+        nPostSweeps      2;
+        cacheAgglomeration on;
+        agglomerator     faceAreaPair;
+        nCellsInCoarsestLevel 100;
+        mergeLevels      1;
+        minIter		     3; // minimum number of iterations (recommended = 3)
+        }
+
+        U
+        {
+        solver          PBiCGStab; // Linear solver for velocity
+        preconditioner  DILU;
+        tolerance       1e-08;
+        relTol          0.001;
+        minIter         2; // recommended minimum number of iterations to 2-3
+        }
+
+        k
+        {
+        solver          PBiCGStab; // Linear solver for turbulence quantities
+        preconditioner  DILU;
+        tolerance       1e-08;
+        relTol          0.001;
+        minIter          2;
+        }
+
+        omega
+        {
+        solver          PBiCGStab; // Linear solver for turbulence quantities
+        preconditioner  DILU;
+        tolerance       1e-08;
+        relTol          0.001;
+        minIter         2;
+        }
+
+        Phi
+        {
+            // linear solver used with the potential solver (potentialFoam)
+            solver GAMG;
+            agglomerator faceAreaPair;
+            mergeLevels 1;
+            cacheAgglomeration true;
+            nCellsInCoarsestLevel 200;
+            tolerance 1e-7;
+            relTol 0.01;
+            smoother GaussSeidel;
+            nPreSweeps 0;
+            nPostSweeps 2;
+            nFinestSweeps 2;
+            minIter 1;
+        }
+
+    }
+
+potentialFlow
+{
+     /*
+     non-orthogonal corrections to perform when using potentialFoam
+     recommended number of iteration (at least 10 iterations)
+     */
+    nNonOrthogonalCorrectors 10;
+}
+
+//SIMPLE method options
+SIMPLE
+{
+    nNonOrthogonalCorrectors 2;
+    pRefCell        0;
+    pRefValue       0;
+
+    consistent on; // enables consistent formulation of the SIMPLE method
+
+    // Field quantities residuals: If the residuals are not reached, 
+    // the solver will iterative until the maximum number of iterations.
+    residualControl
+    {
+        p               1e-4;
+        U               1e-4;
+        nuTilda         1e-4;
+        k               1e-4;
+        omega           1e-4;
+    }
+}
+
+    relaxationFactors
+    {
+        fields
+        {
+            p 		0.9;
+        }
+
+        equations
+        {
+            p 		0.9;
+            U 		0.7;
+            k 		0.7;
+            omega 	0.7;
+        }
+
+    }

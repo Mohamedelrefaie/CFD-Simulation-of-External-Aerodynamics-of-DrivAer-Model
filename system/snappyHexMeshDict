@@ -1,0 +1,384 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  7                                     |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    castellatedMesh true;
+    snap true;
+    addLayers true;
+    geometry //Whole geometry -even the volumes of refinement- (except the wind tunnel) is defined here.
+    {
+        body2.stl //STL geometry of the body
+        {
+            type triSurfaceMesh;
+            name body2;
+            appendRegionName false;
+        }
+
+        frontWheel.stl //STL geometry of the front wheels
+        {
+            type triSurfaceMesh;
+            name frontWheel;
+            appendRegionName false;
+        }
+
+        rearWheel.stl //STL geometry of the rear wheels
+        {
+            type triSurfaceMesh;
+            name rearWheel;
+            appendRegionName false;
+        }
+
+        //Definition of the VoR (volumes of refinement) by using its coordinates.
+        //A cuboid given by two points in its diagonal.
+        //the dimensions have to be inside the domain defined in blockMeshDict.
+        
+        vor1 
+        {
+            type searchableBox;
+            min ( -7.5 0.0 0.0 );
+            max ( 25.0 3.0 4.0 );
+        }
+
+        vor2
+        {
+            type searchableBox;
+            min ( -3.0 0.0 0.0 );
+            max ( 15.0 2.0 3.0 );
+        }
+
+        vor3
+        {
+            type searchableBox;
+            min ( 2.5 0.0 0.0 );
+            max ( 6.5 1.5 1.7 );
+        }
+
+        vor4
+        {
+            type searchableBox;
+            min ( 3.2 0.0 0.0 );
+            max ( 5.2 1.0 1.3 );
+        }
+
+    }
+//Settings for the refinement
+castellatedMeshControls
+{
+    // Refinement parameters
+    // ~~~~~~~~~~~~~~~~~~~~~
+
+    // If local number of cells is >= maxLocalCells on any processor
+    // switches from from refinement followed by balancing
+    // (current method) to (weighted) balancing before refinement.
+    maxLocalCells 500000;
+
+    // Overall cell limit (approximately). Refinement will stop immediately
+    // upon reaching this number so a refinement level might not complete.
+    // Note that this is the number of cells before removing the part which
+    // is not 'visible' from the keepPoint. The final number of cells might
+    // actually be a lot less.
+    maxGlobalCells 10000000;
+
+    // The surface refinement loop might spend lots of iterations refining just a
+    // few cells. This setting will cause refinement to stop if <= minimumRefine
+    // are selected for refinement. Note: it will at least do one iteration
+    // (unless the number of cells to refine is 0)
+    minRefinementCells 0;
+
+    // Allow a certain level of imbalance during refining
+    // (since balancing is quite expensive)
+    // Expressed as fraction of perfect balance (= overall number of cells /
+    // nProcs). 0=balance always.
+    maxLoadUnbalance 0.10;
+
+
+    // Number of buffer layers between different levels.
+    // 1 means normal 2:1 refinement restriction, larger means slower
+    // refinement.
+    nCellsBetweenLevels 5;
+    
+    // Explicit feature edge refinement
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // Specifies a level for any cell intersected by its edges.
+    // This is a featureEdgeMesh, read from constant/triSurface for now.
+    //Level 1 refinement means that if the base side of the mesh is 0.1m, the refined is 0.05m. Level 2 refinement is 0.025m etc.
+    features
+    (
+        
+        {
+            file "frontWheel.eMesh";
+            levels ((0.025 5)); //Distance from edge and Level of refinement
+            refineFeatureEdgesOnly false;
+        }
+
+        
+        {
+            file "rearWheel.eMesh";
+            levels ((0.025 5));
+            refineFeatureEdgesOnly false;
+        }
+
+    );
+    // Surface based refinement
+    // ~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // Specifies two levels for every surface. The first is the minimum level,
+    // every cell intersecting a surface gets refined up to the minimum level.
+    // The second level is the maximum level. Cells that 'see' multiple
+    // intersections where the intersections make an
+    // angle > resolveFeatureAngle get refined up to the maximum level.
+    
+    refinementSurfaces
+    {
+        body2
+        {
+            level ( 4 4 );
+        }
+
+        frontWheel
+        {
+            level ( 4 4 );
+        }
+
+        rearWheel
+        {
+            level ( 4 4 );
+        }
+
+    }
+        
+    // Resolve sharp angles
+    resolveFeatureAngle 30.0;
+        
+    // Region-wise refinement
+    // ~~~~~~~~~~~~~~~~~~~~~~
+
+    // Specifies refinement level for cells in relation to a surface. One of
+    // three modes
+    // - distance. 'levels' specifies per distance to the surface the
+    //   wanted refinement level. The distances need to be specified in
+    //   descending order.
+    // - inside. 'levels' is only one entry and only the level is used. All
+    //   cells inside the surface get refined up to the level. The surface
+    //   needs to be closed for this to be possible.
+    // - outside. Same but cells outside.
+
+    refinementRegions
+    {
+        vor1
+        {
+            mode inside;
+            levels (( 1E5 1 )); //Distance (1E5) is ignored
+        }
+
+        vor2
+        {
+            mode inside;
+            levels (( 1E5 2 ));
+        }
+
+        vor3
+        {
+               mode inside;
+            levels (( 1E5 3 ));
+        }
+
+        vor4
+        {
+            mode inside;
+            levels (( 1E5 4 ));
+        }
+
+    }
+        
+    // Mesh selection
+    // ~~~~~~~~~~~~~~
+
+    // After refinement patches get added for all refinementSurfaces and
+    // all cells intersecting the surfaces get put into these patches. The
+    // section reachable from the locationInMesh is kept.
+    // NOTE: This point should never be on a face, always inside a cell, even
+    // after refinement.
+    
+    locationInMesh (10.0 1.0 1.0 ); //Location of a point which could be anywhere inside the mesh but NOT inside the geometry that is snapped (i.e. STL geometry).
+
+
+    // Whether any faceZones (as specified in the refinementSurfaces)
+    // are only on the boundary of corresponding cellZones or also allow
+    // free-standing zone faces. Not used if there are no faceZones.
+    allowFreeStandingZoneFaces true;        
+
+    planarAngle 30.0;
+    }
+
+// Settings for the snapping.
+snapControls
+{
+    //- Number of patch smoothing iterations before finding correspondence
+    //  to surface
+    nSmoothPatch 3;
+
+    //- Relative distance for points to be attracted by surface feature point
+    //  or edge. True distance is this factor times local
+    //  maximum edge length.
+    tolerance 2.0;
+
+    //- Number of mesh displacement relaxation iterations.
+    nSolveIter 30;
+
+    //- Maximum number of snapping relaxation iterations. Should stop
+    //  before upon reaching a correct mesh.
+    nRelaxIter 5;
+
+    // Feature snapping
+
+        //- Number of feature edge snapping iterations.
+        //  Leave out altogether to disable.
+        nFeatureSnapIter 10;
+
+        //- Detect (geometric only) features by sampling the surface
+        //  (default=false).
+        implicitFeatureSnap false;
+
+        //- Use castellatedMeshControls::features (default = true)
+        explicitFeatureSnap true;
+
+        //- Detect points on multiple surfaces (only for explicitFeatureSnap)
+        multiRegionFeatureSnap false;
+}
+
+// Settings for the layer addition.
+addLayersControls
+{
+    // Are the thickness parameters below relative to the undistorted
+    // size of the refined cell outside layer (true) or absolute sizes (false).
+    relativeSizes true;
+
+    // Per final patch (so not geometry!) the layer information
+    layers
+        {
+            body2
+            {
+                nSurfaceLayers 3;
+                expansionRatio 1.5;
+                finalLayerThickness 0.3;
+                minThickness 0.1;
+            }
+
+            frontWheel
+            {
+                nSurfaceLayers 3;
+                expansionRatio 1.5;
+                finalLayerThickness 0.3;
+                minThickness 0.1;
+            }
+
+            rearWheel
+            {
+                nSurfaceLayers 3;
+                expansionRatio 1.5;
+                finalLayerThickness 0.3;
+                minThickness 0.1;
+            }
+
+            floor
+            {
+                nSurfaceLayers 3;
+                expansionRatio 1.5;
+                finalLayerThickness 0.3;
+                minThickness 0.1;
+            }
+
+        }
+
+    // Expansion factor for layer mesh
+    expansionRatio 1.2;
+    
+    // Wanted thickness of final added cell layer. If multiple layers
+    // is the thickness of the layer furthest away from the wall.
+    // Relative to undistorted size of cell outside layer.
+    // See relativeSizes parameter.
+    finalLayerThickness 0.3;
+    
+    // Minimum thickness of cell layer. If for any reason layer
+    // cannot be above minThickness do not add layer.
+    // Relative to undistorted size of cell outside layer.
+    minThickness 0.1;
+
+    // If points get not extruded do nGrow layers of connected faces that are
+    // also not grown. This helps convergence of the layer addition process
+    // close to features.
+    // Note: changed(corrected) w.r.t 17x! (didn't do anything in 17x)
+    nGrow 0;
+    
+    // Advanced settings
+
+    // When not to extrude surface. 0 is flat surface, 90 is when two faces
+    // are perpendicular
+    featureAngle 130;
+    
+    // At non-patched sides allow mesh to slip if extrusion direction makes
+    // angle larger than slipFeatureAngle.
+    slipFeatureAngle 30;
+
+    // Maximum number of snapping relaxation iterations. Should stop
+    // before upon reaching a correct mesh.
+    nRelaxIter 5;
+
+    // Number of smoothing iterations of surface normals
+    nSmoothSurfaceNormals 1;
+
+    // Number of smoothing iterations of interior mesh movement direction
+    nSmoothNormals 3;
+
+    // Smooth layer thickness over surface patches
+    nSmoothThickness 10;
+
+    // Stop layer growth on highly warped cells
+    maxFaceThicknessRatio 0.5;
+
+    // Reduce layer growth where ratio thickness to medial
+    // distance is large
+    maxThicknessToMedialRatio 0.3;
+
+    // Angle used to pick up medial axis points
+    // Note: changed(corrected) w.r.t 17x! 90 degrees corresponds to 130 in 17x.
+    minMedianAxisAngle 90;
+
+
+    // Create buffer region for new layer terminations
+    nBufferCellsNoExtrude 0;
+    
+    relativeSizes true;
+    nLayerIter 50;
+    nRelaxedIter 20;
+    writeVTK false;
+    noErrors false;
+    layerRecovery 1;
+    growZoneLayers false;
+    projectGrownUp 0.0;
+}
+
+// Generic mesh quality settings. At any undoable phase these determine
+// where to undo.
+meshQualityControls
+{
+     #include "/nfs/opt/OpenFOAM/OpenFOAM-6/etc/caseDicts/mesh/generation/meshQualityDict"
+}
+
+    debug 0;
+    mergeTolerance 1.0E-6;
+    autoBlockMesh false;

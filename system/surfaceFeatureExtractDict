@@ -1,0 +1,50 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  7                                     |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      surfaceFeatureExtractDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//This file is used to extract edge features which are saved into a new file with .eMesh extention. 
+
+frontWheel.stl
+{
+    extractionMethod    extractFromSurface;
+    extractFromSurfaceCoeffs
+    {
+        includedAngle   150; // Identify a feature when angle between faces < includedAngle. Edges having lower angle between its faces are written down.
+    }
+
+    subsetFeatures
+    {
+        // Keep nonManifold edges (edges with >2 connected faces where
+        // the faces form more than two different normal planes
+        nonManifoldEdges    yes;
+        
+        openEdges           yes; // Keep open edges (edges with 1 connected face)
+    }
+        writeObj            yes;
+}
+rearWheel.stl
+{
+    extractionMethod    extractFromSurface;
+    extractFromSurfaceCoeffs
+    {
+        includedAngle   150;
+    }
+
+    subsetFeatures
+    {
+        nonManifoldEdges       yes;
+        openEdges       yes;
+    }
+        writeObj                yes;
+}

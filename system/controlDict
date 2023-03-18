@@ -1,0 +1,195 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  7                                     |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    startFrom startTime;
+    startTime 0;
+    stopAt endTime;
+    endTime 5000.0;
+    deltaT 1.0;
+    writeControl timeStep;
+    writeInterval 250.0;
+    purgeWrite 2; //Keeps only the latest two output folders.
+    writeFormat ascii;
+    writePrecision 10;
+    writeCompression off;
+    timeFormat general;
+    timePrecision 6;
+    graphFormat raw;
+    runTimeModifiable true;
+
+
+    functions
+    {
+        rearWheel
+        {
+            log no;
+            enabled yes;
+
+            // Mandatory entries
+            type forceCoeffs;
+            functionObjectLibs ("libforces.so");
+
+            patches ( rearWheel);
+            
+            // Field names
+            rho rhoInf;
+            rhoInf 1.205;
+            
+            // Centre of rotation for moment calculations
+            CofR ( 0 0 0);
+            // Lift direction
+            liftDir ( 0 0 1);
+            // Drag direction
+            dragDir ( 1 0 0);
+            // Pitch axis
+            pitchAxis ( 0 1 0);
+            // Freestream velocity magnitude [m/s]
+            magUInf 30;
+            // Reference length [m]
+            lRef 1;
+            // Reference area [m2]
+            Aref 1;
+            writeControl timeStep;
+            writeInterval 1;
+        }
+
+        body2
+        {
+            log no;
+            enabled yes;
+            
+            // Mandatory entries
+            type forceCoeffs;
+            functionObjectLibs ("libforces.so");
+
+            patches ( body2);
+            
+            // Field names
+            rho rhoInf;
+            rhoInf 1.205;
+            
+            // Include porosity effects?
+            porosity no;
+            // Centre of rotation for moment calculations
+            CofR ( 0 0 0);
+            // Lift direction
+            liftDir ( 0 0 1);
+            // Drag direction
+            dragDir ( 1 0 0);
+            // Pitch axis
+            pitchAxis ( 0 1 0);
+            // Freestream velocity magnitude [m/s]
+            magUInf 30;
+            // Reference length [m]
+            lRef 1;
+            // Reference area [m2]
+            Aref 1;
+            writeControl timeStep;
+            writeInterval 1;
+        }
+
+        frontWheel
+        {
+            log no;
+            enabled yes;
+	        
+            // Mandatory entries
+            type forceCoeffs;
+            functionObjectLibs ("libforces.so");
+
+            patches (frontWheel);
+            
+            // Reference density [Kg/m3]
+            rho rhoInf;
+            rhoInf 1.205;
+            
+            // Centre of rotation for moment calculations
+            CofR ( 0 0 0);
+            // Lift direction
+            liftDir ( 0 0 1);
+            // Drag direction
+            dragDir ( 1 0 0);
+            // Pitch axis
+            pitchAxis ( 0 1 0);
+            // Freestream velocity magnitude [m/s]
+            magUInf 30;
+            // Reference length [m]
+            lRef 1;
+            // Reference area [m2]
+            Aref 1;
+            writeControl timeStep;
+            writeInterval 1;
+        }
+
+        all //For the complete vehicle
+        {
+            log yes;
+            enabled yes;
+            
+            // Mandatory entries
+            type forceCoeffs;
+            functionObjectLibs ("libforces.so");
+
+            patches ("frontWheel" "rearWheel" "body2");
+
+            // Reference density [Kg/m3]
+            rho rhoInf;
+            rhoInf 1.205;
+
+            CofR ( 0 0 0);
+            // Lift direction
+            liftDir ( 0 0 1);
+            // Drag direction
+            dragDir ( 1 0 0);
+            // Pitch axis
+            pitchAxis ( 0 1 0);
+            // Freestream velocity magnitude [m/s]
+            magUInf 30;
+            // Reference length [m]
+            lRef 1;
+             // Reference area [m2]
+            Aref 1.073476;	//Projected area
+            writeControl timeStep;
+            writeInterval 1;
+        }
+
+        yplus
+        {
+            type                yPlus;
+            functionObjectLibs ("libfieldFunctionObjects.so");
+
+            enabled true;
+
+            writeControl outputTime;
+        }
+
+        domainminandmax
+        {
+            type fieldMinMax;
+            functionObjectLibs ("libfieldFunctionObjects.so");
+        
+            enabled true;
+        
+            mode component;
+        
+            writeControl timeStep;
+            writeInterval 1;
+        
+            log true;
+        
+            fields (p U k omega nut);
+        }
+    }
