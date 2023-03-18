@@ -1,0 +1,22 @@
+This file explains the sequence for running the case
+
+a) Execute localy the "RunLocal1" script
+
+b) Send to the cluster the following file.
+    -jobScript_shm
+    
+c) After the meshing is done, execute localy the "RunLocal2" script.
+
+d) Send to the cluster the following file.
+    -jobScript_rm
+    
+e) After finishing, send to the cluster the following file.    
+    -jobScript_pf
+    
+----------------------------------------WARNING! THIS STEP TAKES ~28h----------------------------------------
+f) After finishing, send to the cluster the following file.    
+    -jobScript_sf    
+----------------------------------------WARNING! THIS STEP TAKES ~28h----------------------------------------
+
+g) After the end of the run (check if folder "5000" exists in Group6_Case/processor* folders) execute the following command:
+    -reconstructPar

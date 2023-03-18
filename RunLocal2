@@ -1,0 +1,15 @@
+#!/bin/bash
+
+reconstructParMesh -constant
+rm -rf 0 > /dev/null 2>&1
+cp -r 0_org 0 > /dev/null 2>&1
+
+foamDictionary constant/polyMesh/boundary -entry entry0.inlet.inGroups -remove
+foamDictionary constant/polyMesh/boundary -entry entry0.outlet.inGroups -remove
+foamDictionary constant/polyMesh/boundary -entry entry0.symmetryPlane.inGroups -remove
+foamDictionary constant/polyMesh/boundary -entry entry0.sideWall.inGroups -remove
+foamDictionary constant/polyMesh/boundary -entry entry0.floor.inGroups -remove
+foamDictionary constant/polyMesh/boundary -entry entry0.topWall.inGroups -remove
+
+
+decomposePar -force

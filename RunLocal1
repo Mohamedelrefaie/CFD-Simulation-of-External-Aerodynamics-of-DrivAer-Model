@@ -1,0 +1,9 @@
+#!/bin/bash
+
+foamCleanTutorials
+rm -rf 0 > /dev/null 2>&1
+
+surfaceFeatureExtract | tee log.surfaceFeatureExtract
+blockMesh | tee log.blockMesh
+
+decomposePar
